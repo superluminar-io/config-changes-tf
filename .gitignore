@@ -1,0 +1,5 @@
+*.zip
+*.tfstate
+*.tfstate.backup
+venv/
+.terraform
