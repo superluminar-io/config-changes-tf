@@ -9,7 +9,7 @@ logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def lambda_handler(event):
+def lambda_handler(event, context):
     if 'detail' not in event:
         logger.info('cant understand event {}'.format(event))
         return False
