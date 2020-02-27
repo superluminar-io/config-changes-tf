@@ -9,6 +9,13 @@ module "config" {
   version = "2.1.0"
 
   config_logs_bucket = aws_s3_bucket.config_logs.bucket
+
+  check_required_tags          = true
+  required_tags_resource_types = ["EC2::Volume"]
+  required_tags = {
+    tag1Key   = "backup"
+    tag1Value = "yes"
+  }
 }
 
 resource "aws_s3_bucket" "config_logs" {
