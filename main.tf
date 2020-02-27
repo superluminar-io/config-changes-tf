@@ -1,101 +1,19 @@
 provider "aws" {
-  region = "eu-west-1"
+  region = "eu-central-1"
 }
 
 provider "archive" {}
 
-// Config Rule
-resource "aws_config_config_rule" "s3_bucket_versioning" {
-  name = "s3_bucket_versioning_enabled"
+module "config" {
+  source  = "trussworks/config/aws"
+  version = "2.1.0"
 
-  source {
-    owner             = "AWS"
-    source_identifier = "S3_BUCKET_VERSIONING_ENABLED"
-  }
-
-  depends_on = ["aws_config_configuration_recorder.recorder"]
+  config_logs_bucket = aws_s3_bucket.config_logs.bucket
 }
 
-resource "aws_config_configuration_recorder" "recorder" {
-  name     = "recorder"
-  role_arn = "${aws_iam_role.recorder.arn}"
-}
-
-resource "aws_config_configuration_recorder_status" "status" {
-  name       = "${aws_config_configuration_recorder.recorder.name}"
-  is_enabled = true
-  depends_on = ["aws_config_delivery_channel.s3"]
-}
-
-resource "aws_config_delivery_channel" "s3" {
-  name           = "example"
-  s3_bucket_name = "${aws_s3_bucket.config.bucket}"
-}
-
-resource "aws_s3_bucket" "config" {
-  bucket = "awsconfig-storage"
-}
-
-resource "aws_iam_role" "recorder" {
-  name = "my-awsconfig-role"
-
-  assume_role_policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "config.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy" "policy" {
-  name = "awsconfig-recorder-policy"
-  role = "${aws_iam_role.recorder.id}"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-        "Action": "config:Put*",
-        "Effect": "Allow",
-        "Resource": "*"
-
-    }
-  ]
-}
-POLICY
-}
-
-resource "aws_iam_role_policy" "s3" {
-  name = "awsconfig-delivery"
-  role = "${aws_iam_role.recorder.id}"
-
-  policy = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": [
-        "s3:*"
-      ],
-      "Effect": "Allow",
-      "Resource": [
-        "${aws_s3_bucket.config.arn}",
-        "${aws_s3_bucket.config.arn}/*"
-      ]
-    }
-  ]
-}
-POLICY
+resource "aws_s3_bucket" "config_logs" {
+  bucket = "mycompany-aws-config-logs"
+  force_destroy = true
 }
 
 // Lambda
